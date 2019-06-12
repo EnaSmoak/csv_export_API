@@ -1,7 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass
 import marshmallow_dataclass
-import marshmallow.validate
+from marshmallow import Schema, fields, validate
 
 
 @dataclass
@@ -28,4 +28,13 @@ class TransferDetails:
     date: datetime
 
 
-TransferdetilsSchema = marshmallow_dataclass.class_schema(TransferDetails)
+TransferDetailsSchema = marshmallow_dataclass.class_schema(TransferDetails)
+
+
+class ResponseSchema(Schema):
+    message = fields.String()
+    errors = fields.Dict()
+
+
+class CSVResponse(ResponseSchema):
+    csv = fields.String(required=True)

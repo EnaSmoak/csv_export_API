@@ -1,13 +1,15 @@
 import csv
-import hug
 import tempfile
 from typing import List
 from datetime import datetime
-from .models import *
+from io import StringIO
+import hug
+from marshmallow import fields
+from . import sample, models
 
 
-def gen_instr(transfers: List[TransferDetails]):
-    with open("transfer_data.csv", "w", newline="") as csvfile:
+def gen_instr(transfers: List[models.TransferDetails]):
+    with StringIO() as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(
             ["H", "icam_corp_inst", "icam_transfer", "", "", datetime.now(), "10100"]
@@ -44,51 +46,11 @@ def gen_instr(transfers: List[TransferDetails]):
         csvwriter.writerow(
             ["T", len(transfers), sum(t.amount for t in transfers), "", ""]
         )
+        return csvfile.getvalue()
 
 
-@hug.get("/transactiondetails")
-def transactiondetails():
-    with open("transfer_data.csv", "r") as f:
-        contents = f.read()
-
-    return {"success": True, "contents": contents}
-
-
-"""print(
-    gen_instr(
-        [
-            TransferDetails(
-                Account(
-                    "TO00T",
-                    "EnterpriseGH",
-                    "GN",
-                    "542601254102",
-                    "GHS",
-                    "EL368",
-                    "Ghana",
-                    "Accra",
-                    "54444554878745450",
-                    "active",
-                    "dbt15240",
-                    "crdt102021",
-                ),
-                Account(
-                    "TO00T",
-                    "EnterpriseGH",
-                    "GN",
-                    "542601254102",
-                    "GHS",
-                    "EL368",
-                    "Ghana",
-                    "Accra",
-                    "54444554878745450",
-                    "active",
-                    "dbt15240",
-                    "crdt102021",
-                ),
-                1000,
-                datetime.now(),
-            )
-        ]
-    )
-)"""
+@hug.post("/transactiondetails")
+def transactiondetails(
+    transfers: hug.types.MarshmallowInputSchema(models.TransferDetailsSchema(many=True))
+) -> models.CSVResponse():
+    return {"csv": gen_instr([sample.TRANSFER])}
